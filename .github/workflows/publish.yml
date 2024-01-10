@@ -19,4 +19,4 @@ jobs:
         echo "Building version ${VERSION}"
         echo $GITHUB_TOKEN | docker login ghcr.io -u axetrading --password-stdin
         docker build . --tag ghcr.io/axetrading/s3-downloader:${VERSION}
-        docker push ghcr.io/axetrading/s3-downloader:${VERSION
+        docker push ghcr.io/axetrading/s3-downloader:${VERSION}
