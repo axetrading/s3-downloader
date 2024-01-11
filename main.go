@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,11 +15,11 @@ import (
 
 func main() {
 	s3Uri := flag.String("s3uri", "", "The S3 URI of the item to download (s3://bucket-name/path/to/item)")
-	outputPath := flag.String("output", "", "The output path for the downloaded item")
+	outputFolder := flag.String("output", "", "Optional: The folder to save the downloaded item")
 	flag.Parse()
 
-	if *s3Uri == "" || *outputPath == "" {
-		fmt.Println("Missing required arguments: s3uri or output")
+	if *s3Uri == "" {
+		fmt.Println("Missing required argument: s3uri")
 		os.Exit(1)
 	}
 
@@ -36,6 +37,18 @@ func main() {
 
 	bucket := parsedUrl.Host
 	item := strings.TrimPrefix(parsedUrl.Path, "/")
+	filename := filepath.Base(item) // Extract file name from the item path
+
+	outputPath := filename
+	if *outputFolder != "" {
+		outputPath = filepath.Join(*outputFolder, filename)
+
+		// Create the output directory if it doesn't exist
+		if err := os.MkdirAll(*outputFolder, os.ModePerm); err != nil {
+			fmt.Printf("Failed to create output directory: %v\n", err)
+			os.Exit(1)
+		}
+	}
 
 	// Load AWS configuration
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -46,7 +59,7 @@ func main() {
 
 	client := s3.NewFromConfig(cfg)
 
-	file, err := os.Create(*outputPath)
+	file, err := os.Create(outputPath)
 	if err != nil {
 		fmt.Printf("Failed to create file: %v\n", err)
 		os.Exit(1)
@@ -62,5 +75,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Successfully downloaded %q to %q\n", *s3Uri, *outputPath)
+	fmt.Printf("Successfully downloaded %q to %q\n", *s3Uri, outputPath)
 }
