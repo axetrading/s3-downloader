@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -66,12 +67,19 @@ func main() {
 	}
 	defer file.Close()
 
-	_, err = client.GetObject(context.TODO(), &s3.GetObjectInput{
+	resp, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &item,
 	})
 	if err != nil {
 		fmt.Printf("Failed to download item: %v\n", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	// Copy the response body to the file
+	if _, err := io.Copy(file, resp.Body); err != nil {
+		fmt.Printf("Failed to write to file: %v\n", err)
 		os.Exit(1)
 	}
 
