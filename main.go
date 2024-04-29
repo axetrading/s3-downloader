@@ -51,8 +51,16 @@ func main() {
 		}
 	}
 
-	// Load AWS configuration
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	// Determine the region to use for the S3 client
+	region := "eu-west-2" // Default region
+	if customRegion := os.Getenv("S3_CONFIG_BUCKET"); customRegion != "" {
+		region = customRegion
+	}
+
+	// Load AWS configuration with dynamic region setting
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+	)
 	if err != nil {
 		fmt.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)
